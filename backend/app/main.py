@@ -12,7 +12,7 @@ from google import genai
 from app.config import Settings
 from app.exceptions import PersistenceError, ProductNotFoundError, TagGenerationError
 from app.repositories.product_repository import ProductRepository, create_pool
-from app.routes import health
+from app.routes import health, products, tags
 from app.services.catalog_index import CatalogIndex
 from app.services.catalog_service import CatalogService
 from app.services.tag_generator import GeminiTagGenerator
@@ -69,6 +69,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     _register_exception_handlers(app)
     app.include_router(health.router)
+    app.include_router(products.router)
+    app.include_router(tags.router)
     return app
 
 
