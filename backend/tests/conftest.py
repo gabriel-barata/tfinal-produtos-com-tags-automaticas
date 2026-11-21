@@ -1,9 +1,13 @@
 """Fakes compartilhados pelos testes (sem rede e sem banco)."""
 
+import os
 from collections.abc import Iterator
 from datetime import UTC, datetime
 
-from app.exceptions import TagGenerationError
+# `app.main` cria o `app` global ao ser importado e `Settings` exige DATABASE_URL.
+os.environ.setdefault("DATABASE_URL", "postgresql://test:test@localhost:5432/test")
+
+from app.exceptions import TagGenerationError  # noqa: E402
 from app.models.product import Product
 
 DEFAULT_FAKE_TAGS = ("calcado", "corrida", "unissex", "azul", "tenis")
