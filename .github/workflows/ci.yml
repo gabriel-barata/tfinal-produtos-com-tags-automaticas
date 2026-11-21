@@ -15,7 +15,7 @@ jobs:
       PYTHONHASHSEED: "0"
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           # Mesma versão do backend/Dockerfile, para builds reproduzíveis.
           version: "0.12.22"
