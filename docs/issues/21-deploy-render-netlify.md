@@ -16,7 +16,7 @@ Aplicação completa no ar, publicada **somente** pelo pipeline (`ci.yml`) a cad
 - [ ] `deploy-web`: `netlify-cli` com versão fixada, `deploy --prod --dir=frontend`
 - [ ] `render.yaml` (SPEC §17.3): `runtime: image`, plano free, `autoDeploy: false`, `healthCheckPath: /health`, env vars
 - [ ] `netlify.toml`: `publish = "frontend"`, sem build
-- [ ] Netlify (manual): criar site sem Git; anotar `NETLIFY_SITE_ID` e a URL; gerar `NETLIFY_AUTH_TOKEN`
+- [ ] Netlify (manual): gerar `NETLIFY_AUTH_TOKEN`; criar projeto vazio sem Git via API (sem upload manual); anotar `NETLIFY_SITE_ID` (Project ID) e a URL
 - [ ] GHCR (manual): tornar o pacote da imagem público após o primeiro push
 - [ ] Render (manual): Blueprint a partir do repo; preencher `DATABASE_URL`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `ALLOWED_ORIGINS` (URL do Netlify); anotar a `ADMIN_KEY` gerada; copiar o deploy hook
 - [ ] GitHub (manual): secrets `RENDER_DEPLOY_HOOK_URL`, `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID` no ambiente `production`; variable `BACKEND_URL`

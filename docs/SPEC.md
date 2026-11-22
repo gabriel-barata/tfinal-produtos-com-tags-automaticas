@@ -1066,7 +1066,7 @@ Credenciais do banco e do Gemini **não** passam pelo GitHub: ficam só no Rende
 
 1. Criar projeto Supabase → rodar `001_create_products.sql` → copiar a URL do Session pooler.
 2. Criar chave no Google AI Studio.
-3. Netlify: criar o site **sem Git** (deploy manual) → anotar `NETLIFY_SITE_ID` e a URL; gerar `NETLIFY_AUTH_TOKEN`.
+3. Netlify: gerar `NETLIFY_AUTH_TOKEN` (Applications → Personal access tokens) → criar um projeto **vazio e sem Git** pela API (`POST /api/v1/sites`), sem upload manual → anotar `NETLIFY_SITE_ID` (Project ID) e a URL. O primeiro conteúdo é publicado pelo pipeline.
 4. Merge do PR com `ci.yml`, `render.yaml` e `netlify.toml`. O primeiro run publica a imagem no GHCR; os jobs de deploy falham por falta de secrets (esperado). Tornar o pacote **público** (uma vez).
 5. Render: novo Blueprint a partir do repo → preencher secrets e `ALLOWED_ORIGINS` (URL do Netlify) → copiar o deploy hook.
 6. GitHub: cadastrar `RENDER_DEPLOY_HOOK_URL`, `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID` (ambiente `production`) e a variable `BACKEND_URL`.
