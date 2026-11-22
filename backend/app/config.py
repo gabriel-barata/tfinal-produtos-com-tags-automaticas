@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     database_url: str
     gemini_api_key: str = ""
     # Modelo configurável por env: modelos free tier são descontinuados com frequência.
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.5-flash-lite"
     admin_key: str = ""
     # NoDecode: sem isso o pydantic-settings exige JSON para listas vindas do ambiente.
     allowed_origins: Annotated[list[str], NoDecode] = ["http://localhost:8080"]

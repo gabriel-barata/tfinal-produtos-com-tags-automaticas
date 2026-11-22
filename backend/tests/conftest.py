@@ -1,9 +1,33 @@
 """Fakes compartilhados pelos testes (sem rede e sem banco)."""
 
+import os
 from collections.abc import Iterator
 from datetime import UTC, datetime
 
+# `app.main` cria o `app` global ao ser importado e `Settings` exige DATABASE_URL.
+os.environ.setdefault("DATABASE_URL", "postgresql://test:test@localhost:5432/test")
+
+from app.exceptions import TagGenerationError  # noqa: E402
 from app.models.product import Product
+
+DEFAULT_FAKE_TAGS = ("calcado", "corrida", "unissex", "azul", "tenis")
+
+
+class FakeTagGenerator:
+    """Fake de `GeminiTagGenerator`: devolve tags fixas (ou falha) e registra as chamadas."""
+
+    def __init__(self, tags: tuple[str, ...] = DEFAULT_FAKE_TAGS, fail: bool = False) -> None:
+        self.tags = tags
+        self.fail = fail
+        self.calls: list[tuple[str, str, tuple[str, ...]]] = []
+
+    def generate(
+        self, name: str, description: str, existing_free_tags: tuple[str, ...]
+    ) -> tuple[str, ...]:
+        self.calls.append((name, description, tuple(existing_free_tags)))
+        if self.fail:
+            raise TagGenerationError("fake generator configured to fail")
+        return self.tags
 
 
 class InMemoryProductRepository:
