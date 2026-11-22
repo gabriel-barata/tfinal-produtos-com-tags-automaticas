@@ -5,9 +5,9 @@ function truncate(text) {
   return text.length <= DESCRIPTION_MAX ? text : `${text.slice(0, DESCRIPTION_MAX).trimEnd()}…`;
 }
 
-export function mount(element) {
+export function mount(element, { onDelete } = {}) {
   // textContent (nunca innerHTML) nos dados da API: nome/descrição vêm de usuários.
-  function buildCard({ product, matched_tags: matched }) {
+  function buildCard({ product, matched_tags: matched }, canDelete) {
     const article = document.createElement("article");
     article.dataset.id = product.id;
 
@@ -27,11 +27,20 @@ export function mount(element) {
     }
 
     article.append(title, description, tags);
+
+    if (canDelete) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "secondary outline delete-button";
+      button.textContent = "excluir";
+      button.addEventListener("click", () => onDelete?.(product));
+      article.append(button);
+    }
     return article;
   }
 
-  /** `results`: lista de `SearchResultResponse` da API. */
-  function render(results) {
+  /** `results`: lista de `SearchResultResponse`; `canDelete`: mostra o botão "excluir". */
+  function render(results, { canDelete = false } = {}) {
     if (results.length === 0) {
       const empty = document.createElement("p");
       empty.textContent = "Nenhum produto encontrado.";
@@ -40,7 +49,7 @@ export function mount(element) {
     }
     const grid = document.createElement("div");
     grid.className = "product-grid";
-    grid.append(...results.map(buildCard));
+    grid.append(...results.map((result) => buildCard(result, canDelete)));
     element.replaceChildren(grid);
   }
 

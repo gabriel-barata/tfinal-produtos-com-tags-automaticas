@@ -139,3 +139,26 @@ button.chip {
 #tag-filters {
   margin-bottom: 1.5rem;
 }
+
+.delete-button {
+  align-self: flex-start;
+  width: auto;
+  margin: 0.75rem 0 0;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.admin-form {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 28rem;
+}
+
+.admin-form input,
+.admin-form button {
+  margin-bottom: 0;
+}
+
+.admin-form button {
+  width: auto;
+}
