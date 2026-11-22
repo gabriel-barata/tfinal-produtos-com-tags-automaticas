@@ -119,7 +119,7 @@ A justificativa fica registrada no README (§19) para o avaliador.
 | F8 | Frontend web de página única com cadastro, busca, filtros e exclusão |
 | F9 | Ambiente de desenvolvimento em Docker Compose |
 | F10 | Deploy gratuito: Render (API), Netlify (front), Supabase (banco) |
-| F11 | CI com lint e testes; keep-alive agendado |
+| F11 | CI/CD único no GitHub Actions: lint, testes e deploy; keep-alive agendado |
 | F12 | Documentação de complexidade (Big-O) nas estruturas e no README |
 
 ### 3.2 Fora do escopo
@@ -910,7 +910,7 @@ Responsivo: 2 colunas no desktop, empilhado no mobile (grid do Pico).
 | `dev` | `uv sync --frozen` (com dev deps); `CMD uvicorn … --reload` |
 | `prod` (**último**, padrão) | copia `app/`; `CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1` |
 
-O Render constrói o stage padrão (último) = `prod`. Dev e produção usam o mesmo Dockerfile.
+O pipeline (§17.2) constrói explicitamente `--target prod` e publica a imagem; o Render só a executa. Dev e produção usam o mesmo Dockerfile.
 
 ### 15.3 `Makefile`
 
@@ -939,7 +939,7 @@ Em dev, o Gemini é **real** (exige `GEMINI_API_KEY` no `.env`).
 
 ---
 
-## 16. Testes e CI
+## 16. Testes e CI/CD
 
 ### 16.1 Estratégia
 
@@ -971,30 +971,54 @@ Gatilhos: `push` e `pull_request`. Job em `backend/`:
 
 Badge do CI no README.
 
+Em `push` na `main`, o mesmo workflow continua com os jobs de deploy (§17.2). Em PR e em outras branches, só o job de lint/testes roda.
+
 ---
 
 ## 17. Deploy e produção
 
 ### 17.1 Serviços
 
+**Princípio:** o único caminho do código até a produção é o `ci.yml`. Render e Netlify **não observam o repositório**; só executam o que o pipeline entrega. Assim, cada deploy é rastreável: commit → run do Actions → imagem `:<sha>` → deploy.
+
 | Serviço | Configuração |
 |---|---|
-| **Render** | Web Service **Docker**, plano Free, `render.yaml` versionado, `healthCheckPath: /health`, auto-deploy da `main` |
-| **Netlify** | `netlify.toml` com `publish = "frontend"`, sem build command, auto-deploy da `main` |
-| **Supabase** | projeto Free, região São Paulo, Session pooler |
+| **GitHub Actions** | `ci.yml` único: lint/testes → deploy da API → deploy do front; ambiente `production` com os secrets de deploy |
+| **GHCR** | registro da imagem do backend, `ghcr.io/gabriel-barata/tfinal-produtos-com-tags-automaticas-api`, pacote **público** (o Render puxa sem credencial) |
+| **Render** | Web Service **imagem** (`runtime: image`), plano Free, `render.yaml` versionado, `autoDeploy: false`, `healthCheckPath: /health` |
+| **Netlify** | `netlify.toml` com `publish = "frontend"`, sem build command; site **sem vínculo com Git** (publicação só via CLI) |
+| **Supabase** | projeto Free, Session pooler; migração aplicada manualmente |
 
-### 17.2 `render.yaml` (esboço)
+### 17.2 Pipeline de deploy (`.github/workflows/ci.yml`)
+
+```
+push na main:   backend (lint + testes) ──▶ deploy-api ──▶ deploy-web
+PR / branches:  backend (lint + testes)
+```
+
+Os jobs de deploy só rodam em `push` na `main`, dependem do job anterior (`needs`) e usam `environment: production` e `concurrency: deploy-production` (`cancel-in-progress: false`, deploys em fila).
+
+| Job | Passos |
+|---|---|
+| `deploy-api` | login no GHCR com `GITHUB_TOKEN` (`permissions: packages: write`) → `docker/build-push-action` com `target: prod`, tags `:<sha>` e `:latest` → `curl -fsS -X POST` no deploy hook do Render com `imgURL` apontando para `:<sha>` → aguarda `$BACKEND_URL/health` responder (`curl --fail --retry`) |
+| `deploy-web` | `netlify-cli` (versão fixada) `deploy --prod --dir=frontend`, com `NETLIFY_AUTH_TOKEN` e `NETLIFY_SITE_ID` |
+
+- O front só é publicado depois de a API responder, para nunca apontar para um backend que não subiu.
+- A espera por `/health` é uma verificação de sanidade: durante a troca, a instância antiga pode responder. Se o deploy falhar, o Render mantém a versão anterior no ar e o job fica vermelho.
+- O smoke test (§16.1) continua manual.
+
+### 17.3 `render.yaml` (esboço)
 
 ```yaml
 services:
   - type: web
     name: catalogo-esportivo-api
-    runtime: docker
+    runtime: image
     plan: free
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    image:
+      url: ghcr.io/gabriel-barata/tfinal-produtos-com-tags-automaticas-api:latest
     healthCheckPath: /health
-    autoDeploy: true
+    autoDeploy: false   # deploy só pelo pipeline (deploy hook)
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -1008,32 +1032,46 @@ services:
         sync: false
 ```
 
-### 17.3 Variáveis de produção
+### 17.4 Variáveis e secrets de produção
+
+**No Render** (a aplicação):
 
 | Var | Exemplo | Tipo |
 |---|---|---|
-| `DATABASE_URL` | `postgresql://postgres.<ref>:<senha>@aws-0-sa-east-1.pooler.supabase.com:5432/postgres` | secret |
+| `DATABASE_URL` | `postgresql://postgres.<ref>:<senha>@aws-0-<região>.pooler.supabase.com:5432/postgres` | secret |
 | `GEMINI_API_KEY` | `AIza…` | secret |
 | `GEMINI_MODEL` | Flash do free tier | config |
 | `ADMIN_KEY` | gerada pelo Render | secret |
 | `ALLOWED_ORIGINS` | `https://<site>.netlify.app` | config |
 
-### 17.4 Comportamento operacional
+**No GitHub** (o pipeline; ambiente `production`):
+
+| Nome | Tipo | Uso |
+|---|---|---|
+| `RENDER_DEPLOY_HOOK_URL` | secret | dispara o deploy da imagem no Render |
+| `NETLIFY_AUTH_TOKEN` | secret | token pessoal do Netlify |
+| `NETLIFY_SITE_ID` | secret | site do front |
+| `BACKEND_URL` | variable | URL da API (espera de `/health` e keep-alive) |
+
+Credenciais do banco e do Gemini **não** passam pelo GitHub: ficam só no Render.
+
+### 17.5 Comportamento operacional
 
 - **Fail fast** no startup se o banco estiver inacessível.
 - **Cold start**: o Render hiberna após ~15 min sem tráfego; o front trata com banner (§12.5).
-- **Keep-alive** (`.github/workflows/keep-alive.yml`): cron a cada 3 dias (`0 12 */3 * *`), `curl --retry 5 --max-time 90 "$BACKEND_URL/health"` (`BACKEND_URL` como *repository variable*). Impede o Supabase free de pausar por inatividade (~7 dias) antes da correção.
+- **Keep-alive** (`.github/workflows/keep-alive.yml`): cron a cada 3 dias (`0 12 */3 * *`), `curl --retry 5 --max-time 90 "$BACKEND_URL/health"`. Impede o Supabase free de pausar por inatividade (~7 dias) antes da correção.
   - Limitação: o GitHub desativa workflows agendados após 60 dias sem atividade no repositório, o que não afeta o prazo.
 
-### 17.5 Ordem do primeiro deploy
+### 17.6 Ordem do primeiro deploy
 
 1. Criar projeto Supabase → rodar `001_create_products.sql` → copiar a URL do Session pooler.
 2. Criar chave no Google AI Studio.
-3. Render: novo Blueprint a partir do repo → preencher secrets → aguardar `Live` → testar `/health`.
-4. Atualizar `API_BASE_URL` em `frontend/js/config.js` com a URL do Render → merge.
-5. Netlify: importar o repo → publicar → copiar a URL → definir `ALLOWED_ORIGINS` no Render.
-6. Configurar `BACKEND_URL` nas variables do GitHub (keep-alive).
-7. Rodar `scripts/smoke_test.py` contra produção.
+3. Netlify: criar o site **sem Git** (deploy manual) → anotar `NETLIFY_SITE_ID` e a URL; gerar `NETLIFY_AUTH_TOKEN`.
+4. Merge do PR com `ci.yml`, `render.yaml` e `netlify.toml`. O primeiro run publica a imagem no GHCR; os jobs de deploy falham por falta de secrets (esperado). Tornar o pacote **público** (uma vez).
+5. Render: novo Blueprint a partir do repo → preencher secrets e `ALLOWED_ORIGINS` (URL do Netlify) → copiar o deploy hook.
+6. GitHub: cadastrar `RENDER_DEPLOY_HOOK_URL`, `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID` (ambiente `production`) e a variable `BACKEND_URL`.
+7. Atualizar `API_BASE_URL` em `frontend/js/config.js` com a URL do Render → PR → merge (dispara o primeiro deploy completo).
+8. Rodar `scripts/smoke_test.py` contra produção.
 
 ---
 
@@ -1064,7 +1102,7 @@ services:
 | Item | Regra |
 |---|---|
 | Repositório | público, `tfinal-produtos-com-tags-automaticas`, conta `gabriel-barata` |
-| `main` | sempre deployável; sem push direto; CI obrigatório para merge |
+| `main` | sempre deployável; sem push direto; CI obrigatório para merge; todo push na `main` com CI verde é deployado pelo pipeline (§17.2) |
 | Branches | 1 por card do Trello: `feat/<n>-slug`, `fix/<n>-slug`, `chore/<n>-slug`, `docs/<n>-slug`, `test/<n>-slug` |
 | Merge | PR → CI verde → **squash merge** |
 | PR | descrição curta + link do card + checklist de critérios de aceite |
@@ -1093,7 +1131,7 @@ Conteúdo mínimo do `README.md` (pt-BR):
 
 5. Por que Gemini e não Ollama (§2.3).
 6. Como rodar localmente: pré-requisitos (Docker, chave Gemini), `cp .env.example .env`, `make up`, URLs locais, `make test`.
-7. Como fazer deploy (§17.5).
+7. Como fazer deploy (§17.6).
 8. Variáveis de ambiente.
 9. Estrutura de pastas (§11.1, resumida).
 10. Link para `docs/SPEC.md`.
@@ -1127,6 +1165,7 @@ Conteúdo mínimo do `README.md` (pt-BR):
 | CT2 | CI verde (ruff + pytest) na `main` |
 | CT3 | `make up` sobe o ambiente completo do zero com `.env` preenchido |
 | CT4 | Site no Netlify + API no Render + banco no Supabase funcionando ponta a ponta (`smoke_test.py`) |
+| CT7 | Push na `main` com CI verde publica API e site sem passo manual; Render e Netlify não têm auto-deploy próprio |
 | CT5 | Docstrings pt-BR com Big-O em todos os métodos públicos das estruturas |
 | CT6 | README completo conforme §19 |
 
@@ -1140,6 +1179,7 @@ Conteúdo mínimo do `README.md` (pt-BR):
 | Cota/limite do Gemini free | cadastros falham (503) | retry único; mensagem clara; nenhum dado inconsistente |
 | Modelo Gemini descontinuado | cadastros falham | `GEMINI_MODEL` configurável por env |
 | Supabase free pausa por inatividade | backend não sobe (fail fast) | keep-alive a cada 3 dias |
+| Deploy falha depois do merge (roda após o CI) | `main` com versão pendente | Render mantém a versão anterior; job vermelho; re-run do workflow |
 | Cold start do Render (~50 s) | primeira impressão lenta | banner no front; timeout de 90 s |
 | Corrida de threads no índice | corrupção da HashTable | `RLock` no `CatalogIndex`, 1 worker |
 | Meta de terminar o código em 1 dia | escopo não concluído | MVP enxuto; cards pequenos com dependências explícitas; a `main` sempre deployável |
@@ -1186,6 +1226,7 @@ Conteúdo mínimo do `README.md` (pt-BR):
 | D23 | Branch por card, PR + squash, CI obrigatório, tag `v1.0.0` | trunk direto na `main` | histórico limpo, 1 commit por card |
 | D24 | Fail fast no startup; keep-alive a cada 3 dias | subir degradado; sem keep-alive | evita índice vazio silencioso; evita pausa do Supabase |
 | D25 | 1 worker; `RLock` no `CatalogIndex`; IA fora do lock | lock na `HashTable`; vários workers | estruturas puras; índice único e consistente |
+| D26 | Deploy centralizado no `ci.yml`: build da imagem `prod` → GHCR → deploy hook do Render; Netlify via CLI; `autoDeploy` desligado nos dois | auto-deploy nativo do Render/Netlify via Git | uma trilha rastreável (commit → run → imagem `:<sha>` → deploy); mesmo artefato testado vai para produção; custo: GHCR + 3 secrets no GitHub |
 
 ---
 

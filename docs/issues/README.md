@@ -46,7 +46,7 @@ Cada arquivo `NN-slug.md` vira 1 card no Trello e 1 PR (exceto cards `manual`). 
 | 18 | [Front: busca + filtros](18-frontend-search-and-filters.md) | frontend | M | 17 |
 | 19 | [Front: admin + exclusão](19-frontend-admin-delete.md) | frontend | P | 17 |
 | 20 | [Provisionar Supabase + Gemini](20-provision-cloud-accounts.md) | infra, manual | P | 03 |
-| 21 | [Deploy Render + Netlify](21-deploy-render-netlify.md) | infra | M | 15, 19, 20 |
+| 21 | [Deploy via CI: Render + Netlify](21-deploy-render-netlify.md) | infra | M | 04, 15, 19, 20 |
 | 22 | [Keep-alive + smoke test](22-keepalive-and-smoke-test.md) | infra | P | 21 |
 | 23 | [README final](23-readme.md) | docs | M | 21 |
 | 24 | [Release v1.0.0 e entrega](24-release-and-delivery.md) | docs, manual | P | 22, 23 |
