@@ -122,3 +122,8 @@ button.chip {
 .msg-ok {
   color: var(--pico-ins-color);
 }
+
+.form-feedback {
+  min-height: 1.5rem;
+  margin-bottom: 0.5rem;
+}
