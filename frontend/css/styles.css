@@ -127,3 +127,15 @@ button.chip {
   min-height: 1.5rem;
   margin-bottom: 0.5rem;
 }
+
+#tag-filters > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+#tag-filters {
+  margin-bottom: 1.5rem;
+}
