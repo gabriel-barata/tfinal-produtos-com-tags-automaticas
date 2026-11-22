@@ -13,6 +13,7 @@ class HashSet[K]:
     """
 
     def __init__(self) -> None:
+        """Cria o conjunto vazio. Complexidade: O(1)."""
         self._table: HashTable[K, None] = HashTable()
 
     def add(self, item: K) -> None:

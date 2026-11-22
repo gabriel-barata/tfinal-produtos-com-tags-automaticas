@@ -9,6 +9,7 @@ class Node:
     __slots__ = ("key", "value", "next")
 
     def __init__(self, key: object, value: object, next: "Node | None" = None) -> None:
+        """Cria o nó. Complexidade: O(1)."""
         self.key = key
         self.value = value
         self.next = next
@@ -23,6 +24,7 @@ class LinkedList:
     """
 
     def __init__(self) -> None:
+        """Cria a lista vazia. Complexidade: O(1)."""
         self.head: Node | None = None
         self._size = 0
 
