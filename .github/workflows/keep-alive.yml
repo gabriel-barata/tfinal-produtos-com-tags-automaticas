@@ -1,0 +1,18 @@
+name: Keep-alive
+
+# Acorda a API a cada 3 dias; o /health toca o banco e evita a pausa do
+# Supabase free por inatividade (SPEC §17.5).
+on:
+  schedule:
+    - cron: "0 12 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chama /health
+        env:
+          BACKEND_URL: ${{ vars.BACKEND_URL }}
+        # Cold start do Render pode passar de 30 s; por isso o timeout alto e os retries.
+        run: curl --fail --retry 5 --max-time 90 "$BACKEND_URL/health"
