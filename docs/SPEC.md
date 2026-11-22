@@ -996,7 +996,7 @@ push na main:   backend (lint + testes) ──▶ deploy-api ──▶ deploy-we
 PR / branches:  backend (lint + testes)
 ```
 
-Os jobs de deploy só rodam em `push` na `main`, dependem do job anterior (`needs`) e usam `environment: production` e `concurrency: deploy-production` (`cancel-in-progress: false`, deploys em fila).
+Os jobs de deploy só rodam em `push` na `main` ou por `workflow_dispatch` manual (validar o deploy antes do merge e re-executar), nunca em PR, dependem do job anterior (`needs`) e usam `environment: production` e `concurrency: deploy-production` (`cancel-in-progress: false`, deploys em fila).
 
 | Job | Passos |
 |---|---|

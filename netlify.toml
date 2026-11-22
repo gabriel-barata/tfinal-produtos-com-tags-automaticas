@@ -1,0 +1,3 @@
+# Site estático sem build; publicado pelo pipeline via Netlify CLI (site sem vínculo com Git).
+[build]
+  publish = "frontend"
