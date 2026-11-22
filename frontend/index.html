@@ -2,10 +2,40 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>Catálogo de Produtos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Catálogo Esportivo</title>
+    <!-- Versão fixada: um update do Pico não pode quebrar o layout sem aviso. -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.min.css"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
-    <h1>Catálogo de Produtos</h1>
-    <p>Em construção.</p>
+    <header class="container">
+      <h1>Catálogo Esportivo</h1>
+      <p class="subtitle">Produtos com tags geradas automaticamente por IA.</p>
+      <div id="server-status"></div>
+    </header>
+
+    <main class="container layout">
+      <section id="register-column" aria-labelledby="register-title">
+        <h2 id="register-title">Cadastrar produto</h2>
+        <div id="product-form"></div>
+      </section>
+
+      <section id="search-column" aria-labelledby="search-title">
+        <h2 id="search-title" class="visually-hidden">Buscar produtos</h2>
+        <div id="search-bar"></div>
+        <div id="tag-filters"></div>
+        <div id="product-list"></div>
+      </section>
+    </main>
+
+    <footer class="container">
+      <div id="admin-panel"></div>
+    </footer>
+
+    <script type="module" src="js/main.js"></script>
   </body>
 </html>

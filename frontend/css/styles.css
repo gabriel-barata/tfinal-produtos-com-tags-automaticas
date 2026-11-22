@@ -1,0 +1,164 @@
+/* Ajustes finos sobre o Pico.css. */
+
+.subtitle {
+  color: var(--pico-muted-color);
+}
+
+/* 2 colunas no desktop (cadastro estreito, busca larga); empilha no celular. */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .layout {
+    grid-template-columns: minmax(260px, 1fr) 2.2fr;
+    align-items: start;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Banner de status do servidor (cold start / erro). */
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--pico-border-radius);
+  background: var(--pico-card-sectioning-background-color);
+}
+
+.banner[data-kind="error"] {
+  border-left: 4px solid var(--pico-del-color);
+}
+
+.banner[data-kind="waking"] {
+  border-left: 4px solid var(--pico-primary);
+}
+
+.banner button {
+  width: auto;
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+}
+
+/* Chips de tag (filtros e cards). */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-block;
+  width: auto;
+  margin: 0;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pico-color);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.chip--matched,
+.chip[aria-pressed="true"] {
+  border-color: var(--pico-primary);
+  background: var(--pico-primary);
+  color: var(--pico-primary-inverse);
+  font-weight: 600;
+}
+
+button.chip {
+  cursor: pointer;
+}
+
+.chip small {
+  opacity: 0.7;
+}
+
+/* Grid de cards de produto. */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
+.product-grid article {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.product-grid article h3 {
+  margin-bottom: 0.4rem;
+  font-size: 1.1rem;
+}
+
+.product-grid article p {
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.msg-error {
+  color: var(--pico-del-color);
+}
+
+.msg-ok {
+  color: var(--pico-ins-color);
+}
+
+.form-feedback {
+  min-height: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+#tag-filters > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+#tag-filters {
+  margin-bottom: 1.5rem;
+}
+
+.delete-button {
+  align-self: flex-start;
+  width: auto;
+  margin: 0.75rem 0 0;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.admin-form {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 28rem;
+}
+
+.admin-form input,
+.admin-form button {
+  margin-bottom: 0;
+}
+
+.admin-form button {
+  width: auto;
+}
