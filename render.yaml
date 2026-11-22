@@ -1,0 +1,22 @@
+# Serviço executa a imagem publicada pelo pipeline (.github/workflows/ci.yml).
+# O Render não observa o repositório: autoDeploy desligado; o deploy vem do deploy hook.
+services:
+  - type: web
+    name: catalogo-esportivo-api
+    runtime: image
+    plan: free
+    image:
+      url: ghcr.io/gabriel-barata/tfinal-produtos-com-tags-automaticas-api:latest
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: ADMIN_KEY
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        sync: false

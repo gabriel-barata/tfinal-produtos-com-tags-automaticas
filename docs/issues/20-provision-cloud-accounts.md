@@ -22,4 +22,4 @@ Contas e credenciais de produção prontas.
 - [ ] Conexão local de teste com a `DATABASE_URL` do pooler funciona (ex.: `psql`)
 
 ## Referências
-SPEC §10.3, §17.5 passos 1–2
+SPEC §10.3, §17.6 passos 1–2

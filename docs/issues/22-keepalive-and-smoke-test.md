@@ -20,4 +20,4 @@ Evitar a pausa do Supabase free e ter uma verificação ponta a ponta reproduzí
 - [ ] `smoke_test.py` passa contra local e contra produção
 
 ## Referências
-SPEC §16.1, §17.4
+SPEC §16.1, §17.5

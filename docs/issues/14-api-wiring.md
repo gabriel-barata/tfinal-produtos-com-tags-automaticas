@@ -26,4 +26,4 @@ Montar a aplicação: injeção de dependências, startup com fail fast, CORS, h
 - [ ] Preflight CORS de origem não permitida é rejeitado
 
 ## Referências
-SPEC §9.1, §9.4, §14, §17.4
+SPEC §9.1, §9.4, §14, §17.5

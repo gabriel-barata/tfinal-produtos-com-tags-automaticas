@@ -3,6 +3,8 @@ name: CI
 on:
   push:
   pull_request:
+  # Permite validar o deploy a partir de uma branch (antes do merge) e re-executá-lo.
+  workflow_dispatch:
 
 jobs:
   backend:
@@ -23,3 +25,67 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest
+
+  # --- Deploy (SPEC §17.2): único caminho até a produção ---------------------
+  # Roda em push na main ou manualmente; nunca em PR.
+  deploy-api:
+    needs: backend
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    # Deploys em fila: dois pushes seguidos não competem pelo mesmo serviço.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}-api
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4.4.1
+      - uses: docker/login-action@v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build e push da imagem (stage prod)
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: backend
+          target: prod
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+      - name: Deploy no Render (deploy hook com a imagem do commit)
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          IMG_URL=$(jq -rn --arg u "$IMAGE:$GITHUB_SHA" '$u|@uri')
+          curl --fail --silent --show-error -X POST "${RENDER_DEPLOY_HOOK_URL}&imgURL=${IMG_URL}"
+      - name: Aguarda a API responder em /health
+        env:
+          BACKEND_URL: ${{ vars.BACKEND_URL }}
+        # --retry-all-errors: durante a troca de versão o Render devolve 502/503 ou recusa conexão.
+        run: |
+          curl --fail --silent --show-error --retry 20 --retry-delay 15 --retry-all-errors \
+            --max-time 90 "$BACKEND_URL/health"
+
+  deploy-web:
+    needs: deploy-api
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+      - name: Publica o frontend no Netlify
+        env:
+          # A CLI lê estas duas variáveis automaticamente.
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npx --yes netlify-cli@27.16.3 deploy --prod --dir=frontend
