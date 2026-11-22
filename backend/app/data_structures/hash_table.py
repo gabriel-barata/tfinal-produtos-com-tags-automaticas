@@ -124,7 +124,10 @@ class HashTable[K, V]:
     # --- Interface estilo dict ---
 
     def __setitem__(self, key: K, value: V) -> None:
-        """`tabela[chave] = valor`; igual a `put`."""
+        """`tabela[chave] = valor`; igual a `put`.
+
+        Complexidade: média O(1) amortizado; pior caso O(n).
+        """
         self.put(key, value)
 
     def __getitem__(self, key: K) -> V:
@@ -142,13 +145,18 @@ class HashTable[K, V]:
     def __delitem__(self, key: K) -> None:
         """`del tabela[chave]`; igual a `remove`.
 
+        Complexidade: média O(1); pior caso O(n).
+
         Raises:
             KeyError: se a chave não existe.
         """
         self.remove(key)
 
     def __contains__(self, key: object) -> bool:
-        """`chave in tabela`; igual a `contains`."""
+        """`chave in tabela`; igual a `contains`.
+
+        Complexidade: média O(1); pior caso O(n).
+        """
         return self.contains(key)  # type: ignore[arg-type]
 
     def __len__(self) -> int:
@@ -156,7 +164,10 @@ class HashTable[K, V]:
         return self._size
 
     def __iter__(self) -> Iterator[K]:
-        """Itera as chaves, como o `dict`; igual a `keys()`."""
+        """Itera as chaves, como o `dict`; igual a `keys()`.
+
+        Complexidade: O(n + capacidade) para percorrer tudo, em qualquer caso.
+        """
         return self.keys()
 
     def __repr__(self) -> str:

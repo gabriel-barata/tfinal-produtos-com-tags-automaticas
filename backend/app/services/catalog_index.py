@@ -37,6 +37,7 @@ class CatalogIndex:
     """
 
     def __init__(self) -> None:
+        """Cria o índice vazio. Complexidade: O(1)."""
         self._products: HashTable[int, Product] = HashTable()
         self._tag_index: HashTable[str, HashSet[int]] = HashTable()
         self._lock = RLock()
